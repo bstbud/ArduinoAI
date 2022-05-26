@@ -603,6 +603,7 @@
   var renderer = new THREE.WebGLRenderer();
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(75, 1, 1, 10000);
+  var quatInit = new THREE.Quaternion();
 
   function init3D() {
     var container = document.getElementById('3d');
@@ -638,7 +639,13 @@
         arduinoModel.add(ledLight);
 
         arduinoModel.rotation.x = 90 * (Math.PI/180);  // Show the bottom side of the board by default
-        
+        arduinoModel.rotation.z = -90 * (Math.PI/180);  // Show the bottom side of the board by default
+        quatInit.setFromAxisAngle(new THREE.Vector3( 1, 0, 0 ), Math.PI / 2);
+        const quat = new THREE.Quaternion();
+        quat.setFromAxisAngle(new THREE.Vector3( 0, 0, -1 ), Math.PI / 2);
+        quatInit.multiply(quat);
+
+
         var sphereSize = 1;
 
         // Light
@@ -654,7 +661,7 @@
 
         // Camera
         camera.position.set(0, 25, 0);
-        camera.rotation.y = Math.PI; // 180
+        //camera.rotation.y = Math.PI; // 180
         camera.lookAt(new THREE.Vector3(0, 0, 0));
         renderer.render(scene, camera);
       }
@@ -698,7 +705,7 @@
   }
 
   function update3d(sensor) {
-  
+
     // Get the quaternion values
     var x = NiclaSenseME['quaternion'].data.x.latest();
     var y = NiclaSenseME['quaternion'].data.y.latest();
@@ -706,9 +713,15 @@
     var w = NiclaSenseME['quaternion'].data.w.latest();
 
     // Construct the quaternion object with the values and apply that to the 3D model
-    const quaternion = new THREE.Quaternion(x, y, z, w);
+    //const quaternion = new THREE.Quaternion(x, y, z, w);
+    const quaternion = new THREE.Quaternion(y, x, -z, w);
     quaternion.normalize();
-    arduinoModel.setRotationFromQuaternion(quaternion);
+
+    const quat0 = quatInit.clone();
+    quat0.multiply(quaternion);
+
+    //arduinoModel.setRotationFromQuaternion(quaternion);
+    arduinoModel.setRotationFromQuaternion(quat0);
 
     renderer.render(scene, camera);
 
